@@ -7,7 +7,6 @@ YOUR HEADER COMMENT HERE
 
 import random
 from amino_acids import aa, codons, aa_table   # you may find these useful
-from load import load_seq
 
 
 def shuffle_string(s):
@@ -98,21 +97,17 @@ def find_all_ORFs_oneframe(dna):
     """
     ORF_array = []
     ORF = ''
-    #nested = False
 
     start = "ATG"
     i = 0
     while (i < len(dna)-3):
-    # for i in range(0,len(dna)-3, 3):
         codon = dna[i:i+3]
         if (codon == start):
             ORF = rest_of_ORF(dna[i:])
             len_ORF = len(ORF)
             ORF_array.append(ORF)
-            i = i + len_ORF -3
+            i = i + len_ORF - 3
         i +=3
-        #    nested = True
-
     return ORF_array
 
 def find_all_ORFs(dna):
@@ -129,8 +124,6 @@ def find_all_ORFs(dna):
     ['ATGCATGAATGTAG', 'ATGAATGTAG', 'ATG']
     >>> find_all_ORFs("ATGCGAATGTAGCATCAAA")
     ['ATGCGAATG']
-
-
     """
     all_ORF = []
 
@@ -165,9 +158,9 @@ def longest_ORF(dna):
     >>> longest_ORF("ATGCGAATGTAGCATCAAA")
     'ATGCTACATTCGCAT'
     """
-    # TODO: implement this
-    pass
-
+    all_ORFs = find_all_ORFs_both_strands(dna)
+    longest_ORF = max(all_ORFs, key=len)
+    return longest_ORF
 
 def longest_ORF_noncoding(dna, num_trials):
     """ Computes the maximum length of the longest ORF over num_trials shuffles
@@ -175,9 +168,17 @@ def longest_ORF_noncoding(dna, num_trials):
 
         dna: a DNA sequence
         num_trials: the number of random shuffles
-        returns: the maximum length longest ORF """
-    # TODO: implement this
-    pass
+        returns: the maximum length longest ORF
+    """
+    i = num_trials
+    ORFs_arr = []
+    while (i > 0):
+         shuffled_dna = shuffle_string(dna)
+         longest_ORF = longest_ORF(shuffled_dna)
+         ORFs_arr.append(longest_ORF)
+         i = i-1
+    overall_longest_ORF = max(ORFs_arr, key=len)
+    return len(overall_longest_ORF)
 
 
 def coding_strand_to_AA(dna):
@@ -194,9 +195,14 @@ def coding_strand_to_AA(dna):
         >>> coding_strand_to_AA("ATGCCCGCTTT")
         'MPA'
     """
-    # TODO: implement this
-    pass
-
+    aa_str = ''
+    i = 0
+    while (i < len(dna)-3):
+        codon = str(dna[i: i+3])
+        aa = aa_table[codon]
+        aa_str += aa
+        i += 3
+    return aa_str
 
 def gene_finder(dna):
     """ Returns the amino acid sequences that are likely coded by the specified dna
@@ -205,9 +211,22 @@ def gene_finder(dna):
         returns: a list of all amino acid sequences coded by the sequence dna.
     """
     # TODO: implement this
-    pass
+    aa_arr = []
+    threshold = longest_ORF_noncoding(dna, 1500)
+    both_strands_ORFs = find_all_ORFs_both_strands(dna)
+    for ORF in both_strands_ORFs:
+        if (len(ORF) > threshold):
+            aa_str = coding_strand_to_AA(ORF)
+            aa_arr.append(aa_str)
+    return sorted(aa_arr)
+
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
-    doctest.run_docstring_examples(find_all_ORFs_both_strands, globals(), verbose=True)
+    # import doctest
+    #
+    # dna = load_seq("./data/X73525.fa")
+    from load import load_seq
+    dna = load_seq("./data/X73525.fa")
+    print(gene_finder(dna))
+    # doctest.testmod()
+    # doctest.run_docstring_examples(coding_strand_to_AA, globals(), verbose=True)
